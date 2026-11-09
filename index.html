@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quick Add Prototype</title>
+<style>
+:root{
+  --ink:#000; --ink-2:#767676; --line:#e0e0e0; --bg:#fff; --soft:#f4f4f4;
+  --red:#d0021b; --stage:#e9e9eb;
+  --font:"Helvetica Neue",Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--stage);font-family:var(--font);color:var(--ink);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding-block:16px;padding-inline:16px}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+
+/* control bar (outside phone) */
+.bar{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;justify-content:center}
+.bar .lbl{font-size:13px;color:#555;margin-right:4px}
+.seg{display:flex;background:#fff;border-radius:999px;padding:3px;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.seg button{padding:8px 16px;border-radius:999px;font-size:13px;font-weight:600;color:#555}
+.seg button.on{background:#000;color:#fff}
+.bar .reset{font-size:13px;color:#555;padding:8px 12px;border-radius:999px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.desc{font-size:12px;color:#555;max-width:390px;text-align:center;margin:0 0 12px;min-height:32px}
+
+/* phone */
+.phone-wrap{transform-origin:top center}
+.phone{width:390px;height:844px;background:#fff;border-radius:46px;border:10px solid #111;position:relative;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.25);display:flex;flex-direction:column}
+.status{background:#000;color:#fff;height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font-size:15px;font-weight:600;flex:none}
+.promo{background:#000;color:#fff;font-size:12.5px;padding:10px 16px 12px;display:flex;justify-content:space-between;align-items:center;flex:none}
+.hdr{height:52px;display:flex;align-items:center;padding:0 10px 0 12px;flex:none;background:#fff;gap:6px}
+.logo{display:grid;grid-template-columns:1fr 1fr;width:34px;height:34px;background:#ed1d24;color:#fff;font-size:8px;line-height:1;place-items:center;font-weight:800;margin-right:2px;padding:6px 2px;align-content:center;grid-template-columns:1fr;gap:1px;letter-spacing:.2px}
+.logo b{font-weight:800}
+.fb{font-style:normal;background:#000;color:#fff;border-radius:50%;width:16px;height:16px;font-size:10px;font-weight:700;display:grid;place-items:center}
+.hdr .t{font-size:18px;margin-left:14px;flex:1}
+.hdr .ic{width:38px;height:36px;display:grid;place-items:center;position:relative}
+.badge{position:absolute;top:0;right:-2px;min-width:16px;height:16px;border-radius:8px;background:#000;color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center;padding:0 4px}
+svg{display:block}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;position:relative;scrollbar-width:none}
+.scroll::-webkit-scrollbar{display:none}
+.tabs{display:flex;gap:22px;padding:0 14px;font-size:14px;color:var(--ink-2);height:40px;align-items:flex-end;white-space:nowrap;overflow:hidden}
+.tabs span{padding-bottom:8px}
+.tabs .on{color:#000;border-bottom:1.5px solid #000}
+.sortbar{position:sticky;top:0;z-index:5;background:#fff;display:flex;justify-content:space-between;align-items:center;padding:12px 12px;font-size:14px}
+.sortbar .r{display:flex;gap:16px;align-items:center}
+.sortbar .r span{display:flex;gap:6px;align-items:center}
+.safari{height:56px;flex:none;background:#fff;display:flex;justify-content:center;align-items:center;padding-bottom:8px}
+.safari span{background:#f2f2f2;border-radius:999px;padding:7px 20px;font-size:12.5px;box-shadow:0 1px 4px rgba(0,0,0,.18)}
+.tabbar div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10.5px;color:var(--ink-2)}
+.tabbar .on{color:#000}
+
+/* grid */
+.grid{display:grid;grid-template-columns:1fr 1fr;align-items:start;gap:0 1px;background:#fff}
+.card{background:#fff;padding-bottom:22px;position:relative}
+.img{position:relative;aspect-ratio:3/4;background:#eee center/cover no-repeat}
+.plus{position:absolute;right:8px;bottom:8px;width:36px;height:36px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.28);display:grid;place-items:center;transition:transform .2s}
+.plus.open{transform:rotate(45deg)}
+.meta{padding:0 10px}
+.sw-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0 6px;min-height:46px}
+.sw{display:flex;gap:7px}
+.dot{width:22px;height:22px;border-radius:50%;border:1px solid rgba(0,0,0,.12);position:relative}
+.dot.on{outline:1.5px solid #000;outline-offset:2px}
+.gender{font-size:11px;color:var(--ink-2);margin-top:4px;letter-spacing:.2px}
+.name{font-size:13.5px;line-height:1.3;margin-top:3px}
+.price{font-size:17px;font-weight:700;margin-top:6px;letter-spacing:-.2px}
+.price.red,.promo-t{color:var(--red)}
+.promo-t{font-size:12px;margin-top:3px}
+.rate{font-size:12px;margin-top:6px;display:flex;gap:4px;align-items:center}
+.rate b{font-size:13px;font-weight:500}
+.rate small{color:#444}
+
+/* B-2 inline panel */
+.inline{overflow:hidden;max-height:0;transition:max-height .28s ease;background:#fff;border-bottom:0}
+.inline.open{max-height:400px;border-bottom:1px solid var(--line)}
+.sw-in{display:flex;gap:10px;padding:2px 3px}
+.sw-in .dot{width:28px;height:28px}
+.chips.err .chip:not(.dis){border-color:var(--red)}
+.btn.sm{height:42px;font-size:12.5px}
+.card.open-card .sw-row{display:none}
+.inline .in{padding:12px 10px 14px}
+.inline .cap{font-size:11px;color:var(--ink-2);margin-bottom:8px;display:flex;justify-content:space-between}
+.chips{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.chip{height:36px;border:1px solid #9a9a9a;display:grid;place-items:center;font-size:12.5px;background:#fff}
+.chip.dis{color:#c2c2c2;background:#f6f6f6;border-color:#e6e6e6;pointer-events:none;background-image:linear-gradient(to top right,transparent 48%,#d9d9d9 49%,#d9d9d9 51%,transparent 52%)}
+.added{display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:600;height:36px}
+.added .ok{display:flex;align-items:center;gap:6px}
+.added .undo{text-decoration:underline;font-weight:500}
+
+/* overlay + sheet */
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .25s;z-index:20}
+.dim.on{opacity:1;pointer-events:auto}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:18px 18px 0 0;z-index:21;transform:translateY(105%);transition:transform .3s cubic-bezier(.2,.8,.2,1);padding:8px 16px 26px;max-height:78%;overflow:auto}
+.sheet.on{transform:none}
+.grab{width:40px;height:4px;border-radius:2px;background:#cfcfcf;margin:0 auto 14px}
+.sh-top{display:flex;gap:12px;align-items:center}
+.sh-top .th{width:60px;height:80px;background:#eee center/cover;flex:none}
+.sh-top .nm{font-size:15px;line-height:1.3}
+.sh-top .pr{font-size:18px;font-weight:700;margin-top:4px}
+.sh-top .pr.red{color:var(--red)}
+.sh-lbl{font-size:13px;margin:18px 0 10px;color:#333;display:flex;justify-content:space-between;align-items:center}
+.sh-lbl b{font-weight:600;color:#000}
+.sh-lbl a{font-size:12.5px;text-decoration:underline;color:#000;display:flex;gap:5px;align-items:center}
+.sw-lg{display:flex;gap:12px}
+.sw-lg .dot{width:34px;height:34px}
+.sw-lg .dot.on{outline-offset:3px}
+.sz{display:flex;gap:5px;flex-wrap:wrap}
+.sz .chip{width:42px;height:44px;font-size:13px}
+.sz .chip.on,.chips .chip.on{background:#fff;color:#000;border:2px solid #000;font-weight:700}
+.sz.err .chip:not(.dis){border-color:var(--red)}
+.errtxt{color:var(--red);font-size:12.5px;margin-top:8px;height:16px}
+.btn{width:100%;height:50px;border-radius:26px;background:#000;color:#fff;font-size:14px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn.ghost{background:#fff;color:#000;border:1.5px solid #000}
+.btn.done{background:#1f7a3d}
+.link{display:block;text-align:center;font-size:13px;text-decoration:underline;margin-top:14px}
+
+/* PDP */
+.pdp{position:absolute;inset:0;background:#fff;z-index:15;transform:translateX(100%);transition:transform .28s ease;display:flex;flex-direction:column}
+.pdp.on{transform:none}
+.pdp .body{flex:1;overflow:auto;scrollbar-width:none}
+.pdp .hero{aspect-ratio:3/4;background:#eee center/cover}
+.pdp .in{padding:16px}
+.pdp .nm{font-size:17px}
+.pdp .pp{font-size:22px;font-weight:700;margin:14px 0}
+.pdp .foot{padding:10px 16px 14px;border-top:1px solid var(--line)}
+.pdp-hd{height:48px;display:flex;align-items:center;padding:0 14px;flex:none;position:absolute;top:0;left:0;right:0;z-index:2}
+.pdp-hd button{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.9);display:grid;place-items:center}
+.qty{display:flex;align-items:center;justify-content:space-between;width:122px;height:50px;border-radius:26px;background:#f2f2f2;padding:0 16px;font-size:17px;flex:none;color:#000}
+.qty span:first-child,.qty span:last-child{color:#555;font-size:22px}
+.addrow{display:flex;gap:12px;margin-top:6px}
+.addrow .btn{flex:1}
+.stock{font-size:11.5px;color:#555;margin:10px 0 14px}
+.btn.line{background:#fff;color:#000;border:1px solid #bdbdbd;height:40px;font-size:12.5px;letter-spacing:.3px}
+.ship{font-size:12.5px;margin-top:16px}
+.rt{display:flex;align-items:center;gap:6px;font-size:14px}
+.rt small{color:#1a5fb4;font-size:12px}
+.pprow{display:flex;justify-content:space-between;align-items:center;margin:14px 0}
+.pprow .pp{margin:0}
+.cartsheet .x{position:absolute;right:16px;top:14px;font-size:22px;line-height:1}
+.cartsheet .h{text-align:center;font-size:15px;margin:6px 0 4px}
+.cartsheet .s{text-align:center;font-size:13px;font-weight:600;margin-bottom:18px}
+.cartsheet .row{display:flex;gap:10px}
+</style>
+</head>
+<body>
+
+
+<div class="bar">
+  <span class="lbl">Group</span>
+  <div class="seg" id="seg">
+    <button data-g="A">A (control)</button>
+    <button data-g="B" class="on">B (Bottom sheet)</button>
+  </div>
+  <button class="reset" id="reset">Reset</button>
+</div>
+<p class="desc" id="desc"></p>
+
+<div class="phone-wrap" id="wrap">
+<div class="phone" id="phone">
+  <div class="status"><span>4:35</span><span style="font-size:13px">▮▮▮ ≋ 55%</span></div>
+  <div class="promo"><span>Holiday Early Access: Shop Limited-Time Deals Now</span>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M9 4l8 8-8 8"/></svg></div>
+  <div class="hdr">
+    <span class="logo"><b>UNI</b><b>QLO</b></span><span style="flex:1"></span>
+    <span class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/></svg></span>
+    <span class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a5 5 0 015-5h6a5 5 0 015 5v2"/></svg></span>
+    <span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.8"><path d="M2 3h3l2.5 12h11l2-8H6.5"/><circle cx="9" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/></svg><i class="badge" id="badge" hidden>0</i></span>
+    <span class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h16"/></svg></span>
+  </div>
+
+  <div class="scroll" id="scroll">
+    <div class="sortbar"><span>Results: 19 items</span>
+      <span class="r">
+        <span><svg width="22" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.8"><path d="M4 4v14M1 15l3 3 3-3M12 4v14M9 15l3 3 3-3M18 20h5"/></svg>Sort by</span>
+        <span><svg width="22" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.8"><path d="M2 7h8M16 7h6M2 17h4M12 17h10"/><circle cx="13" cy="7" r="2.5"/><circle cx="9" cy="17" r="2.5"/></svg>Filter <i class="fb">1</i></span>
+      </span></div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <div class="safari"><span>uniqlo.com</span></div>
+
+  <!-- PDP -->
+  <div class="pdp" id="pdp">
+    <div class="pdp-hd"><button id="pdpBack"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2"><path d="M15 4l-8 8 8 8"/></svg></button></div>
+    <div class="body">
+      <div class="hero" id="pdpHero"></div>
+      <div class="in">
+        <div class="nm" id="pdpName"></div>
+        <div class="sh-lbl"><span>Color: <b id="pdpColor"></b></span></div>
+        <div class="sw-lg" id="pdpSw"></div>
+        <div class="sh-lbl"><span>Size: <b id="pdpSizeLbl">Select</b></span><a>Size Guide</a></div>
+        <div class="sz" id="pdpSz"></div>
+        <div class="pprow"><div class="pp" id="pdpPrice"></div><div class="rt" id="pdpRate"></div></div>
+        <div class="errtxt" id="pdpErr" style="margin:0 0 4px"></div>
+        <div class="addrow"><div class="qty"><span>&minus;</span><span>1</span><span>+</span></div><button class="btn" id="pdpAdd">Add to cart</button></div>
+        <div class="stock">In stock</div>
+        <button class="btn line">&#9825; Add to wish list</button>
+        <div class="ship">SHIPS FREE: $99+ orders and in-store pickups</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dim" id="dim"></div>
+  <div class="sheet" id="sheet"></div>
+</div>
+</div>
+
+<p class="desc" style="margin-top:14px;font-size:11px;color:#777">Student design prototype (mobile web) for CMPM 290 (UC Santa Cruz). Not affiliated with or endorsed by UNIQLO. Not a real store: nothing can be purchased.</p>
+
+<script>
+const SIZES = ['XXS','XS','S','M','L','XL','XXL'];
+const PRODUCTS = [
+  {id:1,img:'img/w1.jpg',name:'Seamless Down Long Coat | Pattern',price:'$199.90',gender:'WOMEN, XXS-XXL',colors:[['Dark Brown','#4a423c']],sizes:SIZES,oos:['XXS']},
+  {id:2,img:'img/w2.jpg',name:'Seamless Down Parka | Pattern',price:'$149.90',red:true,promo:'Limited-Time Offer until 11/11',gender:'WOMEN, XXS-XXL',colors:[['Olive','#4a5648']],sizes:SIZES,oos:['XXL'],rate:['3.5','2']},
+  {id:3,img:'img/w3.jpg',name:'Seamless Down Short Coat',price:'$199.90',gender:'WOMEN, XXS-XXL',colors:[['Dark Gray','#4b524f'],['Black','#2c2c2c']],sizes:SIZES,oos:['XXS','XXL']},
+  {id:4,img:'img/w4.jpg',name:'Seamless Down Long Coat',price:'$199.90',gender:'WOMEN, XXS-XXL',colors:[['69 Navy','#3b4460'],['Dark Gray','#3a3a3a']],sizes:SIZES,oos:['XS','XXL'],rate:['4.3','89']}
+];
+const DESC = {
+  A:'Control: mobile web, no change. Tap a card to open the detail page, choose color and size, then Add to cart.',
+  B:'B: tap "+" on a card to open a bottom sheet. Choose color and size, then Add to cart.'
+};
+const S = {g:'B',cart:0,open:null,added:null,err:null,pdp:null,sheet:null,sel:{}};
+PRODUCTS.forEach(p=>S.sel[p.id]={c:0,s:null});
+let timer=null, subtotal=0;
+
+const $=id=>document.getElementById(id);
+const P=id=>PRODUCTS.find(p=>p.id==id);
+const dots=(p,cls)=>p.colors.map((c,i)=>`<button class="dot ${i===S.sel[p.id].c?'on':''}" style="background:${c[1]}" data-act="color" data-i="${i}" aria-label="${c[0]}"></button>`).join('');
+const heart='<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.6"><path d="M12 20s-8-5-8-10.5A4.5 4.5 0 0112 7a4.5 4.5 0 018 2.5C20 15 12 20 12 20z"/></svg>';
+const star='<svg width="14" height="14" viewBox="0 0 24 24" fill="#000"><path d="M12 2l3 7 7 .6-5.3 4.7 1.6 7.2L12 17.8 5.7 21.5l1.6-7.2L2 9.6 9 9z"/></svg>';
+const plusSvg='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.2"><path d="M12 4v16M4 12h16"/></svg>';
+const check='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M4 12l5 5L20 6"/></svg>';
+
+function chips(p,cls,act){
+  return p.sizes.map(z=>{
+    const dis=p.oos.includes(z), on=S.sel[p.id].s===z;
+    return `<button class="chip ${dis?'dis':''} ${on?'on':''}" ${dis?'disabled':''} data-act="${act}" data-z="${z}">${z}</button>`;
+  }).join('');
+}
+
+function card(p){
+  const showPlus=S.g!=='A';
+  return `<article class="card" data-id="${p.id}">
+    <div class="img" style="background-image:url(${p.img})" data-act="pdp">
+      ${showPlus?`<button class="plus" data-act="plus" aria-label="Quick add">${plusSvg}</button>`:''}
+    </div>
+    <div class="meta">
+      <div class="sw-row"><div class="sw">${dots(p)}</div>${heart}</div>
+      <div data-act="pdp">
+        <div class="gender">${p.gender}</div>
+        <div class="name">${p.name}</div>
+        <div class="price ${p.red?'red':''}">${p.price}</div>
+        ${p.sale?'<div class="promo-t">Sale</div>':''}
+        ${p.promo?`<div class="promo-t">${p.promo}</div>`:''}
+        ${p.rate?`<div class="rate">${star}<b>${p.rate[0]}</b><small>(${p.rate[1]})</small></div>`:''}
+      </div>
+    </div>
+  </article>`;
+}
+
+function render(){
+  const sc=$('scroll'), top=sc.scrollTop;
+  $('grid').innerHTML=PRODUCTS.map(card).join('');
+  sc.scrollTop=top;
+  $('badge').hidden=S.cart===0; $('badge').textContent=S.cart;
+  document.querySelectorAll('#seg button').forEach(b=>b.classList.toggle('on',b.dataset.g===S.g));
+  $('desc').textContent=DESC[S.g];
+}
+
+function addToCart(p){ S.cart++; subtotal+=parseFloat(p.price.slice(1)); }
+
+/* ---------- B-1 sheet ---------- */
+function openSheet(id){
+  S.sheet=id; const p=P(id);
+  S.sel[id].s=S.sel[id].s; renderSheet(); $('dim').classList.add('on'); $('sheet').classList.add('on');
+}
+function renderSheet(err,done){
+  const p=P(S.sheet); if(!p) return;
+  const sel=S.sel[p.id];
+  $('sheet').innerHTML=`
+    <div class="grab"></div>
+    <div class="sh-top"><div class="th" style="background-image:url(${p.img})"></div>
+      <div><div class="nm">${p.name}</div><div class="pr ${p.red?'red':''}">${p.price}</div></div></div>
+    <div class="sh-lbl"><span>Color: <b>${p.colors[sel.c][0]}</b></span></div>
+    <div class="sw-lg">${p.colors.map((c,i)=>`<button class="dot ${i===sel.c?'on':''}" style="background:${c[1]}" data-act="scolor" data-i="${i}" aria-label="${c[0]}"></button>`).join('')}</div>
+    <div class="sh-lbl"><span>Size: <b>${sel.s||'Select'}</b></span><a>Size Guide</a></div>
+    <div class="sz ${err?'err':''}">${chips(p,'','sz')}</div>
+    <div class="errtxt">${err?'Please select a size.':''}</div>
+    <button class="btn ${done?'done':''}" data-act="sadd" ${done?'disabled':''}>${done?check+' Added':'Add to cart'}</button>
+    <a class="link" data-act="sdetails">View details</a>`;
+}
+function closeSheet(){ S.sheet=null; $('dim').classList.remove('on'); $('sheet').classList.remove('on'); }
+
+/* ---------- PDP ---------- */
+function openPdp(id){
+  S.pdp=id; renderPdp(); $('pdp').classList.add('on');
+}
+function renderPdp(){
+  const p=P(S.pdp), sel=S.sel[p.id];
+  $('pdpHero').style.backgroundImage=`url(${p.img})`;
+  $('pdpName').textContent=p.name;
+  $('pdpColor').textContent=p.colors[sel.c][0].toUpperCase();
+  $('pdpSw').innerHTML=p.colors.map((c,i)=>`<button class="dot ${i===sel.c?'on':''}" style="background:${c[1]}" data-act="pcolor" data-i="${i}"></button>`).join('');
+  $('pdpSizeLbl').textContent=sel.s||'Select';
+  $('pdpSz').innerHTML=chips(p,'','psz');
+  $('pdpRate').innerHTML=p.rate?`<span>${'★'.repeat(4)}½</span><b style="font-weight:500">${p.rate[0]}</b><small>(${p.rate[1]})</small>`:'';
+  $('pdpPrice').textContent=p.price; $('pdpPrice').style.color=p.red?'var(--red)':'';
+}
+function closePdp(){ $('pdp').classList.remove('on'); S.pdp=null; $('pdpErr').textContent=''; }
+function cartSheet(p){
+  $('sheet').innerHTML=`<div class="grab"></div><div class="cartsheet"><button class="x" data-act="cclose" aria-label="Close">&times;</button>
+    <div class="h" style="text-align:left;margin:4px 0 16px">Added to cart</div>
+    <div class="s" style="text-align:left;margin-bottom:6px">Subtotal (without tax): ${S.cart} item(s) $${subtotal.toFixed(2)}</div>
+    <div style="font-size:12.5px;color:#767676;margin-bottom:14px">Tax not included.</div>
+    <div style="font-size:12.5px;margin-bottom:20px">Your order qualifies for free standard shipping.</div>
+    <div class="row"><button class="btn" data-act="cclose" style="font-size:12.5px">View cart</button><button class="btn ghost" data-act="cclose" style="font-size:12px;line-height:1.2">Continue shopping</button></div></div>`;
+  $('dim').classList.add('on'); $('sheet').classList.add('on');
+}
+
+/* ---------- events ---------- */
+$('grid').addEventListener('click',e=>{
+  const t=e.target.closest('[data-act]'); if(!t) return;
+  const card=e.target.closest('.card'); const id=card.dataset.id; const p=P(id);
+  const act=t.dataset.act;
+  if(act==='color'){ e.stopPropagation(); S.sel[id].c=+t.dataset.i; S.sel[id].s=null; if(S.added==id){S.added=null;} render(); return; }
+  if(act==='plus'){
+    e.stopPropagation();
+    openSheet(+id);
+    return;
+  }
+  if(act==='pdp'){ openPdp(+id); }
+});
+
+$('sheet').addEventListener('click',e=>{
+  const t=e.target.closest('[data-act]'); if(!t) return; const act=t.dataset.act;
+  if(S.sheet){
+    const sel=S.sel[S.sheet];
+    if(act==='scolor'){ sel.c=+t.dataset.i; sel.s=null; renderSheet(); }
+    if(act==='sz'){ sel.s=t.dataset.z; renderSheet(); }
+    if(act==='sadd'){
+      if(!sel.s){ renderSheet(true); return; }
+      const p=P(S.sheet); addToCart(p); S.sel[p.id].s=null; S.sheet=null; render(); cartSheet(p);
+    }
+    if(act==='sdetails'){ const id=S.sheet; closeSheet(); openPdp(id); }
+  }
+  if(act==='cclose'){ closeSheet(); closePdp(); }
+});
+$('dim').addEventListener('click',()=>{ if(S.sheet) closeSheet(); });
+
+$('pdpSw').addEventListener('click',e=>{ const t=e.target.closest('[data-act=pcolor]'); if(!t) return; S.sel[S.pdp].c=+t.dataset.i; S.sel[S.pdp].s=null; renderPdp(); });
+$('pdpSz').addEventListener('click',e=>{ const t=e.target.closest('[data-act=psz]'); if(!t) return; S.sel[S.pdp].s=t.dataset.z; $('pdpErr').textContent=''; renderPdp(); });
+$('pdpAdd').addEventListener('click',()=>{
+  const p=P(S.pdp); if(!S.sel[p.id].s){ $('pdpErr').textContent='Please select a size.'; return; }
+  addToCart(p); render(); S.sheet=null; cartSheet(p);
+});
+$('pdpBack').addEventListener('click',()=>{ S.sel[S.pdp].s=null; closePdp(); });
+
+$('seg').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; resetAll(b.dataset.g); });
+$('reset').addEventListener('click',()=>resetAll(S.g));
+function resetAll(g){
+  clearTimeout(timer); closeSheet(); closePdp();
+  S.g=g; S.cart=0; subtotal=0; 
+  PRODUCTS.forEach(p=>S.sel[p.id]={c:0,s:null});
+  $('scroll').scrollTop=0; render();
+}
+
+/* fit phone to window height */
+function fit(){ const s=Math.min(1,(window.innerWidth-32)/410,(window.innerHeight-130)/864); $('wrap').style.zoom=Math.max(.4,s); }
+addEventListener('resize',fit); fit(); render();
+</script>
+
+</body>
+</html>
